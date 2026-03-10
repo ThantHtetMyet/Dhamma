@@ -1,0 +1,137 @@
+.userlist-card,
+.activitylist-card {
+  background: var(--clr-card);
+  border-radius: 20px;
+  border: 1px solid var(--clr-border);
+  box-shadow: 0 10px 25px -15px var(--clr-shadow);
+  max-width: 900px;
+  margin: 0 auto 20px;
+  overflow: hidden; /* Ensure pagination rounded corners match card */
+}
+
+.userlist-header,
+.activitylist-header {
+  padding: 24px 24px 0 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-add-new {
+  background: var(--clr-primary);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px var(--clr-button-shadow);
+}
+
+.btn-add-new:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px var(--clr-button-shadow);
+  background: #5d4037;
+}
+
+.userlist-header h2 {
+  margin: 0;
+  color: #5d4037;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.userlist-loading {
+  color: var(--clr-muted);
+  font-style: italic;
+}
+
+.userlist-table-wrapper {
+  margin: 0 24px 20px 24px;
+  overflow: hidden; /* For rounded corners */
+  border: 1px solid var(--clr-border);
+  border-radius: 12px;
+  background: var(--clr-surface);
+}
+
+.userlist-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.userlist-table th,
+.userlist-table td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--clr-border);
+  border-right: 1px solid var(--clr-border);
+  color: var(--clr-text);
+  font-size: 0.85rem;
+}
+
+.userlist-table th:last-child,
+.userlist-table td:last-child {
+  border-right: none;
+}
+
+.userlist-table th {
+  background-color: var(--clr-bg-accent-1);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  color: #8b6e60;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  user-select: none;
+}
+
+.userlist-table th:hover {
+  background-color: var(--clr-border);
+}
+
+.no-data-cell {
+  text-align: center;
+  padding: 30px !important;
+  color: var(--clr-muted);
+  font-style: italic;
+}
+
+.userlist-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.userlist-table tbody tr:hover {
+  background-color: var(--clr-bg-accent-2);
+}
+
+.userlist-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.userlist-icon-btn {
+  background: none;
+  border: none;
+  font-size: 1.2em;
+  cursor: pointer;
+  padding: 4px;
+  transition: transform 0.2s ease;
+}
+
+.userlist-icon-btn:hover {
+  transform: scale(1.1);
+}
+
+.userlist-icon-btn.userlist-danger {
+  color: #e74c3c; /* A distinct color for delete actions */
+}

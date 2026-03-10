@@ -1,0 +1,77 @@
+.activity-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px; /* Reduced gap */
+  padding: 8px 4px;
+}
+
+.activity-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px; /* Reduced gap */
+}
+
+.activity-form .form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Better responsiveness */
+  gap: 12px;
+}
+
+.activity-form label {
+  font-weight: 600;
+  color: var(--clr-muted);
+  font-size: 0.8rem; /* Smaller font */
+  letter-spacing: 0.02em;
+}
+
+.activity-form input,
+.activity-form select,
+.activity-form textarea {
+  padding: 8px 12px; /* Reduced padding */
+  border: 1.5px solid var(--clr-border);
+  border-radius: 10px; /* Slightly smaller radius */
+  font-size: 0.9rem; /* Smaller font */
+  color: var(--clr-text);
+  background-color: var(--clr-surface);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 100%;
+  box-sizing: border-box; /* Ensure padding doesn't cause overflow */
+}
+
+.activity-form input:focus,
+.activity-form select:focus,
+.activity-form textarea:focus {
+  border-color: var(--clr-primary);
+  outline: none;
+  background-color: #fff;
+  box-shadow: 0 0 0 3px var(--clr-bg-accent-1); 
+}
+
+.activity-form .form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--clr-border);
+}
+
+.activity-form .btn {
+  padding: 8px 20px; /* Reduced padding */
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.85rem; /* Smaller font */
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.activity-form .btn-primary {
+  background-color: var(--clr-primary);
+  color: white;
+}
+
+.activity-form .btn-secondary {
+  background-color: var(--clr-bg-accent-1);
+  color: var(--clr-primary);
+}

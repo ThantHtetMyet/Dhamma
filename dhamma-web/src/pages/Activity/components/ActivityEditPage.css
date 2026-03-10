@@ -1,0 +1,194 @@
+.activity-edit-page-container {
+  padding: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: calc(100vh - 100px);
+}
+
+.activity-card-wrapper {
+  width: 100%;
+  max-width: 520px;
+  background: var(--clr-card);
+  border-radius: 28px;
+  padding: 32px;
+  border: 1px solid var(--clr-border);
+  box-shadow: 0 25px 50px -12px var(--clr-shadow);
+  animation: fadeIn 0.4s ease-out;
+}
+
+.activity-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.activity-title-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.activity-title-group h3 {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #5d4037;
+  letter-spacing: -0.02em;
+}
+
+.activity-back-btn {
+  background: var(--clr-bg-accent-1);
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--clr-primary);
+  font-size: 1.2rem;
+}
+
+.activity-back-btn:hover {
+  background: var(--clr-border);
+  transform: translateX(-4px);
+}
+
+.activity-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.activity-icon-btn {
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 1.1rem;
+}
+
+.activity-icon-btn:hover {
+  border-color: var(--clr-primary);
+  transform: translateY(-2px);
+  background: white;
+  box-shadow: 0 4px 12px var(--clr-shadow);
+}
+
+/* Detail Body Styles - Cute Box Design */
+.activity-detail-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--clr-bg-accent-1);
+  padding: 12px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--clr-border);
+  transition: all 0.2s ease;
+}
+
+.detail-item:hover {
+  border-color: var(--clr-primary);
+  background: white;
+  box-shadow: 0 4px 12px var(--clr-shadow);
+}
+
+.detail-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #8b6e60;
+  font-weight: 800;
+}
+
+.detail-value {
+  font-size: 1rem;
+  color: var(--clr-text);
+  font-weight: 600;
+}
+
+.detail-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.duration-text {
+  color: var(--clr-primary);
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+
+.detail-remark {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--clr-text);
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+/* Name Section - Primary Header Box */
+.activity-name-section {
+  background: var(--clr-bg-accent-1);
+  padding: 24px;
+  border-radius: 20px;
+  border: 1px solid var(--clr-border);
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.detail-item-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.activity-main-name {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #5d4037;
+  letter-spacing: -0.02em;
+}
+
+.activity-actions {
+  display: flex;
+  gap: 12px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 600px) {
+  .activity-card-wrapper {
+    padding: 24px;
+    border-radius: 20px;
+  }
+  .detail-row {
+    grid-template-columns: 1fr;
+  }
+}

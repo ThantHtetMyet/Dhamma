@@ -1,0 +1,90 @@
+.user-detail-page-container {
+  padding: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: calc(100vh - 100px);
+}
+
+.useredit-card,
+.user-edit-form-container,
+.user-detail-view-wrapper {
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+/* Flip Card Logic */
+.user-detail-flip-wrapper {
+  perspective: 1500px;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  min-height: 500px;
+  transition: max-width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.user-detail-flip-wrapper.flipped {
+  max-width: 900px; /* Expand for the table when flipped */
+}
+
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+}
+
+.user-detail-flip-wrapper.flipped .flip-card-inner {
+  transform: rotateY(180deg);
+}
+
+.flip-card-front, .flip-card-back {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.flip-card-back {
+  transform: rotateY(180deg);
+}
+
+.useredit-card,
+.user-edit-form-container {
+  background: var(--clr-card);
+  border-radius: 28px;
+  padding: 32px;
+  border: 1px solid var(--clr-border);
+  box-shadow: 0 25px 50px -12px var(--clr-shadow);
+  animation: fadeIn 0.4s ease-out;
+}
+
+.user-edit-form-container {
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 600px) {
+  .user-detail-page-container {
+    padding: 16px;
+  }
+  
+  .useredit-card,
+  .user-edit-form-container {
+    padding: 24px;
+    border-radius: 20px;
+  }
+}

@@ -1,0 +1,273 @@
+.useredit-card {
+  animation: fadeIn 0.4s ease-out;
+}
+
+.useredit-back-btn {
+  background: var(--clr-bg-accent-1);
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--clr-primary);
+  font-size: 1.25rem;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.useredit-back-btn:hover {
+  background: var(--clr-primary);
+  color: white;
+  transform: translateX(-4px);
+  box-shadow: 0 4px 12px var(--clr-button-shadow);
+}
+
+.useredit-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.useredit-icon-btn {
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.useredit-icon-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--clr-shadow);
+}
+
+.useredit-icon-btn.useredit-danger:hover {
+  background: #fff5f5;
+  border-color: #feb2b2;
+  color: #e53e3e;
+}
+
+.useredit-table-btn {
+  background: var(--clr-bg-accent-1);
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.useredit-table-btn:hover {
+  background: var(--clr-primary);
+  color: white;
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px var(--clr-button-shadow);
+}
+
+.useredit-body {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 24px;
+}
+
+.useredit-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--clr-bg-accent-1);
+  padding: 12px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--clr-border);
+  transition: all 0.2s ease;
+}
+
+.useredit-info-item:hover {
+  border-color: var(--clr-primary);
+  background: white;
+  box-shadow: 0 4px 12px var(--clr-shadow);
+}
+
+.useredit-label {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #8b6e60;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.useredit-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--clr-text);
+}
+
+.useredit-name-section {
+  grid-column: 1 / -1;
+  background: var(--clr-bg-accent-1);
+  padding: 24px;
+  border-radius: 20px;
+  border: 1px solid var(--clr-border);
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.useredit-name-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.useredit-name-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.useredit-name {
+  font-weight: 700;
+  font-size: 1.75rem;
+  color: #5d4037;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.useredit-status-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border: 1px solid currentColor;
+}
+
+.status-active {
+  background: #e6fffa;
+  color: #2c7a7b;
+}
+
+.status-inactive {
+  background: #fff5f5;
+  color: #c53030;
+}
+
+.useredit-activities-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.total-duration-badge {
+  background: var(--clr-bg-accent-1);
+  color: var(--clr-primary);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  border: 1px solid var(--clr-primary);
+}
+
+.useredit-activities-section h4 {
+  margin: 0;
+  color: var(--clr-text);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.useredit-activities-table-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--clr-border);
+  border-radius: 12px;
+  background: var(--clr-surface);
+}
+
+.useredit-activities-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.useredit-activities-table th,
+.useredit-activities-table td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--clr-border);
+  border-right: 1px solid var(--clr-border);
+  color: var(--clr-text);
+}
+
+.useredit-activities-table th:last-child,
+.useredit-activities-table td:last-child {
+  border-right: none;
+}
+
+.useredit-activities-table th {
+  background: var(--clr-bg-accent-1);
+  font-weight: 700;
+  color: var(--clr-muted);
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+}
+
+.useredit-activities-table tr:last-child td {
+  border-bottom: none;
+}
+
+.useredit-activities-table .font-semibold {
+  font-weight: 600;
+}
+
+.duration-col {
+  color: var(--clr-primary);
+  font-weight: 600;
+}
+
+.remark-col {
+  color: var(--clr-muted);
+  max-width: 150px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.no-activity-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background: var(--clr-bg-accent-1);
+  border-radius: 12px;
+  border: 1px dashed var(--clr-border);
+  color: var(--clr-muted);
+  text-align: center;
+}
+
+.no-activity-icon {
+  font-size: 2.5rem;
+  margin-bottom: 12px;
+  opacity: 0.6;
+}
+
+.no-activity-placeholder p {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 500;
+  font-style: italic;
+}
