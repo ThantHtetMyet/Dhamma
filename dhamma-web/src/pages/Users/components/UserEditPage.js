@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import AlertModal from "../../../components/AlertModal";
 import LoadingOverlay from "../../../components/LoadingOverlay";
+import QRCode from "qrcode";
 import { supabase } from "../../../services/supabase";
 import UserEdit from "./UserEdit";
 import UserForm from "./UserForm";
@@ -9,14 +9,29 @@ import UserActivities from "./UserActivities";
 import "./UserEditPage.css";
 
 const emptyForm = {
-  userID: "",
   fullName: "",
-  email: "",
   mobileNo: "",
-  loginPassword: "",
-  roleId: "1", // Default to Normal role
-  isActive: true,
+  healthIssues: [],
+  remark: "",
 };
+
+const emptyActivityForm = {
+  id: null,
+  name: "",
+  startDate: "",
+  endDate: "",
+  remark: "",
+};
+
+const healthIssueOptions = [
+  "ဆီးချို",
+  "သွေးတိုး",
+  "နှလုံးရောဂါ",
+  "ပန်းနာရင်ကျပ်",
+  "ကျောက်ကပ်ရောဂါ",
+  "Allergy",
+  "အဆစ်အမြစ်ရောင်",
+];
 
 export default function UserEditPage({
   canUpdate,
@@ -24,6 +39,8 @@ export default function UserEditPage({
   currentUser,
   fetchUsers,
   showModal,
+  showConfirmModal,
+  basePath = "/users",
 }) {
   const { userId } = useParams();
   const navigate = useNavigate();
@@ -33,6 +50,9 @@ export default function UserEditPage({
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState(emptyForm);
   const [mode, setMode] = useState("view");
+  const [isQrModalOpen, setIsQrModalOpen] = useState(false);
+  const [qrImageUrl, setQrImageUrl] = useState("");
+  const [qrTargetUrl, setQrTargetUrl] = useState("");
 
   useEffect(() => {
     if (location.pathname.endsWith("/edit") || userId === "new") {
@@ -42,21 +62,23 @@ export default function UserEditPage({
     }
   }, [location.pathname, userId]);
 
-  const [isFlipped, setIsFlipped] = useState(false);
-  const [roles, setRoles] = useState([]);
   const [actCurrentPage, setActCurrentPage] = useState(1);
-  const [actPageSize, setActPageSize] = useState(5); // Smaller page size for the flip card
+  const [actPageSize, setActPageSize] = useState(5);
   const [actTotalItems, setActTotalItems] = useState(0);
+  const [activityFormMode, setActivityFormMode] = useState("none");
+  const [activityFormData, setActivityFormData] = useState(emptyActivityForm);
 
-  const fetchRoles = useCallback(async () => {
-    const { data, error } = await supabase
-      .from("UserRole")
-      .select("*")
-      .order("RoleName");
-    if (!error) {
-      setRoles(data || []);
-    }
-  }, []);
+  const formatDateForInput = (dateStr) => {
+    if (!dateStr) return "";
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return "";
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const hours = String(d.getHours()).padStart(2, "0");
+    const minutes = String(d.getMinutes()).padStart(2, "0");
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
 
   const fetchUserActivities = useCallback(async () => {
     if (userId === "new") return;
@@ -83,9 +105,11 @@ export default function UserEditPage({
 
   const fetchUser = useCallback(async () => {
     if (userId === "new") {
-      setUser({ FullName: "New User" }); // Placeholder for the header box
+      setUser({ FullName: "New User" });
       setFormData(emptyForm);
       setActivities([]);
+      setActivityFormMode("none");
+      setActivityFormData(emptyActivityForm);
       setLoading(false);
       return;
     }
@@ -109,13 +133,10 @@ export default function UserEditPage({
     // Initialize form data if in edit mode
     if (data) {
       setFormData({
-        userID: data.UserID || "",
         fullName: data.FullName || "",
-        email: data.Email || "",
         mobileNo: data.MobileNo || "",
-        loginPassword: "",
-        roleId: data.UserRoleID || "1",
-        isActive: Boolean(data.IsActive),
+        healthIssues: Array.isArray(data.HealthIssues) ? data.HealthIssues : [],
+        remark: data.Remark || "",
       });
     }
 
@@ -124,21 +145,143 @@ export default function UserEditPage({
   }, [userId, showModal, fetchUserActivities]);
 
   useEffect(() => {
-    fetchRoles();
-  }, [fetchRoles]);
-
-  useEffect(() => {
     if (userId) {
       fetchUser();
     }
   }, [userId, fetchUser]);
 
   function handleInputChange(e) {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: value,
     }));
+  }
+
+  function handleHealthIssueToggle(issue) {
+    setFormData((prev) => ({
+      ...prev,
+      healthIssues: prev.healthIssues.includes(issue)
+        ? prev.healthIssues.filter((item) => item !== issue)
+        : [...prev.healthIssues, issue],
+    }));
+  }
+
+  function handleActivityFormChange(e) {
+    const { name, value } = e.target;
+    setActivityFormData((prev) => ({ ...prev, [name]: value }));
+  }
+
+  function handleCreateActivity() {
+    if (!canUpdate) return;
+    setActivityFormMode("create");
+    setActivityFormData({
+      ...emptyActivityForm,
+      startDate: formatDateForInput(new Date()),
+      endDate: formatDateForInput(new Date()),
+    });
+  }
+
+  function handleEditActivity(activity) {
+    if (!canUpdate) return;
+    setActivityFormMode("edit");
+    setActivityFormData({
+      id: activity.ID,
+      name: activity.Name || "",
+      startDate: formatDateForInput(activity.StartDate),
+      endDate: formatDateForInput(activity.EndDate),
+      remark: activity.Remark || "",
+    });
+  }
+
+  function handleCancelActivityForm() {
+    setActivityFormMode("none");
+    setActivityFormData(emptyActivityForm);
+  }
+
+  async function handleSaveActivity(e) {
+    e.preventDefault();
+    if (!canUpdate) return;
+    if (!activityFormData.name.trim()) {
+      showModal("error", "Validation Error", "Activity name is required.");
+      return;
+    }
+    if (!activityFormData.startDate || !activityFormData.endDate) {
+      showModal("error", "Validation Error", "Start date and end date are required.");
+      return;
+    }
+
+    const start = new Date(activityFormData.startDate);
+    const end = new Date(activityFormData.endDate);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+      showModal("error", "Validation Error", "Please provide valid start and end dates.");
+      return;
+    }
+    if (end < start) {
+      showModal("error", "Validation Error", "End date must be later than start date.");
+      return;
+    }
+
+    const now = new Date().toISOString();
+    const payload = {
+      Name: activityFormData.name.trim(),
+      UserID: userId,
+      StartDate: start.toISOString(),
+      EndDate: end.toISOString(),
+      Remark: activityFormData.remark.trim() || null,
+      UpdatedDate: now,
+      UpdatedBy: currentUser?.ID || null,
+    };
+
+    if (activityFormMode === "create") {
+      payload.CreatedDate = now;
+      payload.CreatedBy = currentUser?.ID || null;
+      payload.IsDeleted = false;
+      const { error } = await supabase.from("Activity").insert([payload]);
+      if (error) {
+        showModal("error", "Create Failed", error.message || "Unable to create activity.");
+        return;
+      }
+      showModal("success", "Created", "Activity created successfully.");
+    } else {
+      const { error } = await supabase
+        .from("Activity")
+        .update(payload)
+        .eq("ID", activityFormData.id)
+        .eq("UserID", userId)
+        .eq("IsDeleted", false);
+      if (error) {
+        showModal("error", "Update Failed", error.message || "Unable to update activity.");
+        return;
+      }
+      showModal("success", "Updated", "Activity updated successfully.");
+    }
+
+    handleCancelActivityForm();
+    await fetchUserActivities();
+  }
+
+  async function handleDeleteActivity(activity) {
+    if (!canDelete) return;
+    showConfirmModal({
+      title: "Confirm Delete",
+      message: `Are you sure you want to delete activity "${activity.Name}"?`,
+      confirmText: "Delete",
+      onConfirm: async () => {
+        const now = new Date().toISOString();
+        const { error } = await supabase
+          .from("Activity")
+          .update({ IsDeleted: true, UpdatedDate: now, UpdatedBy: currentUser?.ID || null })
+          .eq("ID", activity.ID)
+          .eq("UserID", userId);
+        if (error) {
+          showModal("error", "Delete Failed", error.message || "Unable to delete activity.");
+          return;
+        }
+        showModal("success", "Deleted", "Activity deleted successfully.");
+        await fetchUserActivities();
+      },
+    });
   }
 
   async function handleSave(e) {
@@ -146,80 +289,80 @@ export default function UserEditPage({
     if (!canUpdate) return;
 
     const payload = {
-      userID: formData.userID.trim(),
       fullName: formData.fullName.trim(),
-      email: formData.email.trim(),
       mobileNo: formData.mobileNo.trim(),
-      loginPassword: formData.loginPassword,
-      roleId: formData.roleId,
-      isActive: formData.isActive,
+      healthIssues: formData.healthIssues,
+      remark: formData.remark.trim(),
     };
 
-    if (!payload.userID || payload.userID.length < 3) {
-      showModal("error", "Validation Error", "UserID must be at least 3 characters long.");
-      return;
-    }
     if (!payload.fullName || payload.fullName.length < 3) {
       showModal("error", "Validation Error", "Full Name must be at least 3 characters long.");
-      return;
-    }
-    if (!payload.email) {
-      showModal("error", "Validation Error", "Email is required.");
       return;
     }
     if (!payload.mobileNo) {
       showModal("error", "Validation Error", "Mobile No is required.");
       return;
     }
-    if (!payload.roleId) {
-      showModal("error", "Validation Error", "Role is required.");
-      return;
-    }
-    if (payload.loginPassword && payload.loginPassword.length < 6) {
-      showModal("error", "Validation Error", "Password must be at least 6 characters long.");
+    const phonePattern = /^[0-9+()\s-]{7,20}$/;
+    if (!phonePattern.test(payload.mobileNo)) {
+      showModal("error", "Validation Error", "Please enter a valid mobile number.");
       return;
     }
 
-    // Check if UserID is already taken by another user
-    if (payload.userID !== user.UserID) {
+    if (payload.mobileNo !== user.MobileNo) {
       setLoading(true);
       const { data: existingUser, error: checkError } = await supabase
         .from("User")
         .select("ID")
-        .eq("UserID", payload.userID)
+        .eq("MobileNo", payload.mobileNo)
         .eq("IsDeleted", false)
         .maybeSingle();
       setLoading(false);
 
       if (checkError) {
-        showModal("error", "Check Failed", "Unable to verify UserID uniqueness.");
+        showModal("error", "Check Failed", "Unable to verify mobile number uniqueness.");
         return;
       }
 
-      if (existingUser) {
-        showModal("error", "Duplicate UserID", `The UserID "${payload.userID}" is already taken by another user.`);
+      if (existingUser && existingUser.ID !== userId) {
+        showModal("error", "Duplicate Mobile No", `The mobile number "${payload.mobileNo}" is already used by another user.`);
         return;
       }
     }
 
     const now = new Date().toISOString();
     const saveObj = {
-      UserRoleID: payload.roleId,
-      UserID: payload.userID,
       FullName: payload.fullName,
-      Email: payload.email,
       MobileNo: payload.mobileNo,
-      IsActive: payload.isActive,
+      HealthIssues: payload.healthIssues,
+      Remark: payload.remark || null,
       UpdatedDate: now,
       UpdatedBy: currentUser?.ID || null,
     };
 
-    if (payload.loginPassword) {
-      saveObj.LoginPassword = payload.loginPassword;
-    }
-
     let response;
     if (userId === "new") {
+      const { data: defaultRole, error: roleError } = await supabase
+        .from("UserRole")
+        .select("ID, RoleName")
+        .in("RoleName", ["user", "Normal"])
+        .eq("IsDeleted", false);
+
+      if (roleError) {
+        showModal("error", "Save Failed", roleError.message || "Unable to load default role.");
+        return;
+      }
+      const preferredRole =
+        defaultRole?.find((role) => role.RoleName?.toLowerCase() === "user") ||
+        defaultRole?.find((role) => role.RoleName?.toLowerCase() === "normal");
+      if (!preferredRole?.ID) {
+        showModal("error", "Save Failed", 'Default role "user" was not found.');
+        return;
+      }
+
+      saveObj.UserRoleID = preferredRole.ID;
+      saveObj.LoginPassword = "P@ssw0rd";
+      saveObj.IsActive = true;
       saveObj.CreatedDate = now;
       saveObj.CreatedBy = currentUser?.ID || null;
       saveObj.LastLogin = now; // Initialize with current time for non-null constraint
@@ -238,23 +381,74 @@ export default function UserEditPage({
 
     fetchUsers();
     showModal("success", "Save Successful", `User ${userId === "new" ? "created" : "updated"} successfully.`);
-    navigate(`/users/${savedId}`);
+    navigate(`${basePath}/${savedId}`);
   }
 
   async function handleDeleteUser(userToDelete) {
     if (!canDelete) return;
-    const now = new Date().toISOString();
-    const { error } = await supabase
-      .from("User")
-      .update({ IsDeleted: true, UpdatedDate: now, UpdatedBy: currentUser?.ID || null })
-      .eq("ID", userToDelete.ID);
-    if (error) {
-      showModal("error", "Delete Failed", error.message || "Unable to delete user.");
-      return;
+    showConfirmModal({
+      title: "Confirm Delete",
+      message: `Are you sure you want to delete "${userToDelete.FullName}"?`,
+      confirmText: "Delete",
+      onConfirm: async () => {
+        const now = new Date().toISOString();
+        const { error } = await supabase
+          .from("User")
+          .update({ IsDeleted: true, UpdatedDate: now, UpdatedBy: currentUser?.ID || null })
+          .eq("ID", userToDelete.ID);
+        if (error) {
+          showModal("error", "Delete Failed", error.message || "Unable to delete user.");
+          return;
+        }
+        fetchUsers();
+        showModal("success", "Delete Successful", "User deleted successfully.");
+        navigate(basePath, { replace: true });
+      },
+    });
+  }
+
+  async function handleGenerateUserQr(userData) {
+    if (!userData?.ID) return;
+    setLoading(true);
+    setIsQrModalOpen(false);
+    const profileUrl = getPublicProfileUrl(userData.ID);
+    try {
+      const qrDataUrl = await QRCode.toDataURL(profileUrl, {
+        width: 220,
+        margin: 2,
+        color: {
+          dark: "#5d4037",
+          light: "#ffffff",
+        },
+      });
+      setQrImageUrl(qrDataUrl);
+      setQrTargetUrl(profileUrl);
+      setIsQrModalOpen(true);
+    } catch {
+      showModal("error", "QR Generate Failed", "Could not generate QR code.");
     }
-    fetchUsers();
-    showModal("success", "Delete Successful", "User deleted successfully.");
-    navigate("/users", { replace: true });
+    setLoading(false);
+  }
+
+  function getQrFileName() {
+    const source = (user?.FullName || user?.MobileNo || "user-qr").trim();
+    const safeName = source.replace(/[^a-zA-Z0-9-_]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+    return `${safeName || "user-qr"}.png`;
+  }
+
+  function getWhatsappShareUrl() {
+    const shareText = `User profile: ${qrTargetUrl}`;
+    return `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+  }
+
+  function getPublicProfileUrl(userId) {
+    const rawPublicUrl = (process.env.PUBLIC_URL || "").trim().replace(/\/+$/, "");
+    const appBaseUrl = rawPublicUrl
+      ? /^https?:\/\//i.test(rawPublicUrl)
+        ? rawPublicUrl
+        : `${window.location.origin}${rawPublicUrl.startsWith("/") ? rawPublicUrl : `/${rawPublicUrl}`}`
+      : `${window.location.origin}${window.location.pathname.replace(/\/+$/, "")}`;
+    return `${appBaseUrl}/#/public-users/${encodeURIComponent(userId)}`;
   }
 
   if (loading) {
@@ -268,38 +462,45 @@ export default function UserEditPage({
   return (
     <div className="user-detail-page-container">
       {mode === "view" ? (
-        <div className={`user-detail-flip-wrapper ${isFlipped ? 'flipped' : ''}`}>
-          <div className="flip-card-inner">
-            <div className="flip-card-front">
-              <UserEdit
-                user={user}
-                canUpdate={canUpdate}
-                canDelete={canDelete}
-                onEdit={() => navigate(`/users/${userId}/edit`)}
-                onToggleActivities={() => setIsFlipped(true)}
-                onDelete={handleDeleteUser}
-                onBack={() => navigate("/users")}
-              />
-            </div>
-            <div className="flip-card-back">
-              <UserActivities 
-                activities={activities} 
-                onBackToProfile={() => setIsFlipped(false)}
-                onViewActivity={(act) => navigate(`/activity/${act.ID}`)}
-                currentPage={actCurrentPage}
-                totalItems={actTotalItems}
-                pageSize={actPageSize}
-                onPageChange={setActCurrentPage}
-                onPageSizeChange={setActPageSize}
-              />
-            </div>
-          </div>
+        <div className="user-detail-view-wrapper">
+          <UserEdit
+            user={user}
+            canUpdate={canUpdate}
+            canDelete={canDelete}
+            canGenerateQr={userId !== "new"}
+            onEdit={() => navigate(`${basePath}/${userId}/edit`)}
+            onDelete={handleDeleteUser}
+            onBack={() => navigate(basePath)}
+            onGenerateQr={handleGenerateUserQr}
+          />
+          <UserActivities
+            activities={activities}
+            canUpdate={canUpdate}
+            canDelete={canDelete}
+            activityFormMode={activityFormMode}
+            activityFormData={activityFormData}
+            onActivityFormChange={handleActivityFormChange}
+            onCreateActivity={handleCreateActivity}
+            onEditActivity={handleEditActivity}
+            onDeleteActivity={handleDeleteActivity}
+            onSaveActivity={handleSaveActivity}
+            onCancelActivityForm={handleCancelActivityForm}
+            currentPage={actCurrentPage}
+            totalItems={actTotalItems}
+            pageSize={actPageSize}
+            onPageChange={setActCurrentPage}
+            onPageSizeChange={setActPageSize}
+          />
         </div>
       ) : (
         <div className="user-edit-form-container">
           <div className="useredit-header">
              <div className="useredit-title-group">
-                <button className="useredit-back-btn" onClick={() => navigate(`/users/${userId}`)} title="Back to details">
+                <button
+                  className="useredit-back-btn"
+                  onClick={() => navigate(userId === "new" ? basePath : `${basePath}/${userId}`)}
+                  title="Back to details"
+                >
                   ←
                 </button>
                 <h3>{userId === "new" ? "New User" : "Edit User"}</h3>
@@ -307,14 +508,57 @@ export default function UserEditPage({
           </div>
           <UserForm
             formData={formData}
-            roles={roles}
             editingUserId={userId === "new" ? null : userId}
             onChange={handleInputChange}
+            healthIssueOptions={healthIssueOptions}
+            onHealthIssueToggle={handleHealthIssueToggle}
             onSubmit={handleSave}
-            onCancel={() => navigate(`/users/${userId}`)}
+            onCancel={() => navigate(userId === "new" ? basePath : `${basePath}/${userId}`)}
           />
         </div>
       )}
+      {isQrModalOpen ? (
+        <div className="user-qr-modal-backdrop" onClick={() => setIsQrModalOpen(false)}>
+          <div className="user-qr-modal" onClick={(e) => e.stopPropagation()}>
+            <button type="button" className="user-qr-modal-close" aria-label="Close QR modal" onClick={() => setIsQrModalOpen(false)}>
+              ×
+            </button>
+            <h5 className="user-qr-modal-title">User QR</h5>
+            <div className="user-qr-content">
+              <img src={qrImageUrl} alt="User Profile QR" className="user-qr-image" />
+              <p className="user-qr-user">{user?.FullName || user?.MobileNo || ""}</p>
+              <div className="user-qr-actions">
+                <a className="user-qr-save-btn" href={qrImageUrl} download={getQrFileName()} aria-label="Download QR" title="Download QR">
+                  <svg viewBox="0 0 24 24" className="user-qr-save-icon" aria-hidden="true">
+                    <path
+                      d="M12 3a1 1 0 0 1 1 1v8.59l2.3-2.29a1 1 0 1 1 1.4 1.41l-4 4a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.41L11 12.59V4a1 1 0 0 1 1-1Zm-7 13a1 1 0 0 1 1 1v2h12v-2a1 1 0 1 1 2 0v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1Z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </a>
+                <a
+                  className="user-qr-whatsapp-btn"
+                  href={getWhatsappShareUrl()}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Share profile via WhatsApp"
+                  title="Share via WhatsApp"
+                >
+                  <svg viewBox="0 0 32 32" className="user-qr-whatsapp-icon" aria-hidden="true">
+                    <path
+                      d="M16.08 4.5c-6.34 0-11.48 5.08-11.48 11.35 0 2.03.54 4 1.56 5.73L4.5 27.5l6.09-1.61a11.5 11.5 0 0 0 5.49 1.39c6.34 0 11.48-5.08 11.48-11.35S22.42 4.5 16.08 4.5Zm0 20.83c-1.77 0-3.5-.47-5.02-1.35l-.36-.21-3.61.95.97-3.5-.23-.36a9.77 9.77 0 0 1-1.53-5.23c0-5.39 4.42-9.77 9.86-9.77S25.94 10.24 25.94 15.63s-4.42 9.7-9.86 9.7Zm5.41-7.27c-.3-.15-1.78-.87-2.05-.97-.27-.1-.47-.15-.67.15s-.77.97-.95 1.17c-.17.2-.35.22-.65.07-.3-.15-1.27-.46-2.42-1.47-.9-.79-1.5-1.76-1.67-2.06-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.6-.92-2.2-.24-.58-.48-.5-.67-.5h-.57c-.2 0-.52.07-.8.37-.27.3-1.05 1.03-1.05 2.52 0 1.5 1.07 2.93 1.22 3.14.15.2 2.1 3.35 5.19 4.56.74.32 1.32.5 1.77.64.74.24 1.42.2 1.95.12.6-.1 1.78-.73 2.03-1.43.25-.7.25-1.3.17-1.43-.07-.12-.27-.2-.57-.35Z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </a>
+              </div>
+              <a className="user-qr-profile-link" href={qrTargetUrl} target="_blank" rel="noreferrer">
+                Open Profile Link
+              </a>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

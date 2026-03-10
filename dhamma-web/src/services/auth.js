@@ -62,13 +62,13 @@ export async function requestPasswordReset({ email }) {
 
 export async function loginRaw(credentials) {
   const response = (ok, status) => ({ ok, status });
-  const userID = credentials.userID?.trim();
+  const mobileNo = credentials.mobileNo?.trim();
   const password = credentials.password || "";
 
   const { data, error } = await supabase
     .from("User")
-    .select("ID, UserID, FullName, Email, MobileNo, LoginPassword, IsActive, UserRoleID, UserRole:UserRole!FK_User_UserRole(RoleName)")
-    .eq("UserID", userID)
+    .select("ID, FullName, MobileNo, HealthIssues, Remark, LoginPassword, IsActive, UserRoleID, UserRole:UserRole!FK_User_UserRole(RoleName)")
+    .eq("MobileNo", mobileNo)
     .limit(1);
 
   if (error) {
@@ -76,7 +76,7 @@ export async function loginRaw(credentials) {
   }
 
   if (!data || !data.length) {
-    return { res: response(false, 404), data: { error: "UserID does not exist." } };
+    return { res: response(false, 404), data: { error: "Mobile number does not exist." } };
   }
 
   const user = data[0];
@@ -97,59 +97,50 @@ export async function loginRaw(credentials) {
 export async function signupRaw(userData) {
   const now = new Date().toISOString();
   const payload = {
-    userID: userData.userID?.trim(),
     fullName: userData.fullName?.trim(),
-    email: userData.email?.trim(),
     mobileNo: userData.mobileNo?.trim(),
-    loginPassword: userData.loginPassword,
+    healthIssues: Array.isArray(userData.healthIssues) ? userData.healthIssues : [],
+    remark: userData.remark?.trim() || "",
   };
 
   const response = (ok, status) => ({ ok, status });
 
   const { data: existing, error: existingError } = await supabase
     .from("User")
-    .select("UserID, MobileNo")
-    .or(`UserID.eq.${payload.userID},MobileNo.eq.${payload.mobileNo}`);
+    .select("MobileNo")
+    .eq("MobileNo", payload.mobileNo);
 
   if (existingError) {
     return { res: response(false, 500), data: { error: existingError.message } };
   }
 
   if (existing && existing.length) {
-    const userIdExists = existing.some((item) => item.UserID === payload.userID);
-    const mobileExists = existing.some((item) => item.MobileNo === payload.mobileNo);
-    if (userIdExists && mobileExists) {
-      return { res: response(false, 409), data: { message: "UserID and Mobile No already exist." } };
-    }
-    if (userIdExists) {
-      return { res: response(false, 409), data: { message: "UserID already exists." } };
-    }
-    if (mobileExists) {
-      return { res: response(false, 409), data: { message: "Mobile No already exists." } };
-    }
-    return { res: response(false, 409), data: { message: "Duplicate user data found." } };
+    return { res: response(false, 409), data: { message: "Mobile No already exists." } };
   }
 
   let roleId;
   const { data: roleData, error: roleError } = await supabase
     .from("UserRole")
-    .select("ID")
-    .eq("RoleName", "Normal")
+    .select("ID, RoleName")
+    .in("RoleName", ["user", "Normal"])
     .eq("IsDeleted", false)
-    .limit(1);
+    .order("RoleName");
 
   if (roleError) {
     return { res: response(false, 500), data: { error: roleError.message } };
   }
 
   if (roleData && roleData.length) {
-    roleId = roleData[0].ID;
+    const preferredRole =
+      roleData.find((role) => role.RoleName?.toLowerCase() === "user") ||
+      roleData.find((role) => role.RoleName?.toLowerCase() === "normal");
+    roleId = preferredRole?.ID;
   } else {
     const { data: newRole, error: newRoleError } = await supabase
       .from("UserRole")
       .insert({
-        RoleName: "Normal",
-        Description: "Standard user",
+        RoleName: "user",
+        Description: "Default user role",
         IsDeleted: false,
         CreatedDate: now,
         UpdatedDate: now,
@@ -163,15 +154,19 @@ export async function signupRaw(userData) {
     roleId = newRole?.ID;
   }
 
+  if (!roleId) {
+    return { res: response(false, 500), data: { error: 'Default role "user" was not found.' } };
+  }
+
   const { data, error } = await supabase
     .from("User")
     .insert({
       UserRoleID: roleId,
-      UserID: payload.userID,
       FullName: payload.fullName,
-      Email: payload.email,
       MobileNo: payload.mobileNo,
-      LoginPassword: payload.loginPassword,
+      HealthIssues: payload.healthIssues,
+      Remark: payload.remark || null,
+      LoginPassword: "P@ssw0rd",
       LastLogin: now,
       IsActive: true,
       IsDeleted: false,

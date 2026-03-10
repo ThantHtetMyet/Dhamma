@@ -14,6 +14,8 @@ export default function UserList({
   onRowDoubleClick,
   onSort,
   sortConfig,
+  searchTerm,
+  onSearchTermChange,
   currentPage,
   totalItems,
   pageSize,
@@ -43,32 +45,35 @@ export default function UserList({
           + New User
         </button>
       </div>
+      <div className="userlist-filters">
+        <input
+          className="userlist-search-input"
+          type="text"
+          value={searchTerm}
+          onChange={(e) => onSearchTermChange(e.target.value)}
+          placeholder="Search username or mobile no"
+        />
+      </div>
       <div className="userlist-table-wrapper">
         <table className="userlist-table">
           <thead>
             <tr>
-              <th onClick={() => handleSort("UserID")} style={{ cursor: 'pointer' }}>
-                User ID {getSortIcon("UserID")}
-              </th>
               <th onClick={() => handleSort("FullName")} style={{ cursor: 'pointer' }}>
                 Full Name {getSortIcon("FullName")}
               </th>
-              <th>Role</th>
-              <th>Status</th>
+              <th onClick={() => handleSort("MobileNo")} style={{ cursor: 'pointer' }}>
+                Mobile No {getSortIcon("MobileNo")}
+              </th>
+              <th>Total Activity</th>
               <th style={{ textAlign: 'center' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {users.map((user) => (
               <tr key={user.ID} onDoubleClick={() => onRowDoubleClick(user)}>
-                <td className="font-bold">{user.UserID}</td>
                 <td>{user.FullName}</td>
-                <td>{user.UserRole?.RoleName || "Normal User"}</td>
-                <td>
-                  <span className={`status-text ${user.IsActive ? "active" : "inactive"}`}>
-                    {user.IsActive ? "● Active" : "○ Inactive"}
-                  </span>
-                </td>
+                <td className="font-bold">{user.MobileNo}</td>
+                <td>{user.ActivityCount || 0}</td>
                 <td>
                   <div className="userlist-actions">
                     <button className="userlist-icon-btn" type="button" onClick={() => onView(user)} title="View Detail">
@@ -90,7 +95,7 @@ export default function UserList({
             ))}
             {users.length === 0 && !loading && (
               <tr>
-                <td colSpan="5" className="no-data-cell">No users found.</td>
+                <td colSpan="4" className="no-data-cell">No users found.</td>
               </tr>
             )}
           </tbody>

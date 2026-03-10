@@ -8,8 +8,7 @@ export default function ForgotPassword() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    userID: "",
-    phone: "",
+    mobileNo: "",
     newPassword: "",
     confirmPassword: "",
   });
@@ -49,14 +48,13 @@ export default function ForgotPassword() {
     }
     try {
       const { res, data } = await resetPasswordRaw({
-        userID: formData.userID,
-        phone: formData.phone,
+        mobileNo: formData.mobileNo,
         newPassword: formData.newPassword,
       });
       setLoading(false);
       if (!res.ok) {
         if (res.status === 404) {
-          showModal("error", "Reset Failed", "UserID and MobileNo are mismatched. Please enter correct UserID and MobileNo.");
+          showModal("error", "Reset Failed", "Mobile No not found. Please enter the correct mobile number.");
           return;
         }
         showModal("error", "Reset Failed", data?.error || "Unable to reset password.");
@@ -84,16 +82,12 @@ export default function ForgotPassword() {
         </div>
         <div className="fp-header">
           <h2>Reset password</h2>
-          <p>UserID need to match with phone number that used to create that account.</p>
+          <p>Enter your mobile number and your new password.</p>
         </div>
         <form onSubmit={handleSubmit} className="fp-form" autoComplete="off">
           <div className="fp-form-group fp-floating-label">
-            <input type="text" id="fp-userid" name="userID" value={formData.userID} onChange={handleChange} placeholder=" " required />
-            <label htmlFor="fp-userid">UserID</label>
-          </div>
-          <div className="fp-form-group fp-floating-label">
-            <input type="tel" id="fp-phone" name="phone" value={formData.phone} onChange={handleChange} placeholder=" " required />
-            <label htmlFor="fp-phone">Phone Number</label>
+            <input type="tel" id="fp-mobile" name="mobileNo" value={formData.mobileNo} onChange={handleChange} placeholder=" " required />
+            <label htmlFor="fp-mobile">Mobile Number</label>
           </div>
           <div className="fp-form-group fp-floating-label">
             <input type="password" id="fp-password" name="newPassword" value={formData.newPassword} onChange={handleChange} placeholder=" " required />

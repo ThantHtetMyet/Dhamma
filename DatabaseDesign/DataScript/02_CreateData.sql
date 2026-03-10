@@ -3,7 +3,7 @@
     FROM (
     VALUES
         ('Admin', 'System administrator', false, now(), now(), NULL::uuid, NULL::uuid),
-        ('Normal', 'Standard user', false, now(), now(), NULL::uuid, NULL::uuid)
+        ('user', 'Default user role', false, now(), now(), NULL::uuid, NULL::uuid)
     ) AS v("RoleName", "Description", "IsDeleted", "CreatedDate", "UpdatedDate", "CreatedBy", "UpdatedBy")
     WHERE NOT EXISTS (
     SELECT 1 FROM "UserRole" ur WHERE ur."RoleName" = v."RoleName"
@@ -15,7 +15,7 @@
     JOIN (
     VALUES
         ('Admin', 'User', true, true, true, true),
-        ('Normal', 'User', false, true, false, false)
+        ('user', 'User', false, true, false, false)
     ) AS v("RoleName", "ModuleName", "CanCreate", "CanRead", "CanUpdate", "CanDelete")
     ON ur."RoleName" = v."RoleName"
     WHERE NOT EXISTS (
@@ -40,10 +40,10 @@
 
     INSERT INTO "User" (
     "UserRoleID",
-    "UserID",
     "FullName",
-    "Email",
     "MobileNo",
+    "HealthIssues",
+    "Remark",
     "LoginPassword",
     "LastLogin",
     "IsActive",
@@ -55,10 +55,10 @@
     )
     SELECT
     ur."ID",
-    'admin',
     'Admin User',
-    'admin@example.com',
     '83816401',
+    ARRAY[]::text[],
+    'System administrator account',
     'Willowglen@12345',
     now(),
     true,
@@ -70,5 +70,5 @@
     FROM "UserRole" ur
     WHERE ur."RoleName" = 'Admin'
     AND NOT EXISTS (
-        SELECT 1 FROM "User" u WHERE u."UserID" = 'admin'
+        SELECT 1 FROM "User" u WHERE u."MobileNo" = '83816401'
     );

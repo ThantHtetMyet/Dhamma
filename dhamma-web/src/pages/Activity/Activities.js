@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Routes, Route, useNavigate } from "react-router-dom";
 import { supabase } from "../../services/supabase";
+import { clearToken } from "../../services/auth";
 import NavBar from "../../components/NavBar";
 import ActivityList from "./components/ActivityList";
 import ActivityEditPage from "./components/ActivityEditPage";
@@ -59,7 +60,7 @@ export default function Activities() {
   const fetchUsers = useCallback(async () => {
     const { data, error } = await supabase
       .from("User")
-      .select("ID, UserID, FullName")
+      .select("ID, FullName, MobileNo")
       .eq("IsDeleted", false);
     if (!error) setUsers(data || []);
   }, []);
@@ -104,14 +105,16 @@ export default function Activities() {
 
   const signOut = () => {
     sessionStorage.removeItem("user");
-    navigate("/");
+    clearToken();
+    window.location.hash = "/signin";
+    window.location.reload();
   };
 
-  const isAdmin = currentUser?.UserRole?.RoleName === "Admin" || currentUser?.UserRoleID === 2;
+  const isAdmin = currentUser?.UserRole?.RoleName === "Admin";
 
   return (
     <div className="activities-page">
-      <NavBar userName={currentUser?.FullName || currentUser?.UserID} onSignOut={signOut} activeMenu="Activity" />
+      <NavBar userName={currentUser?.FullName || currentUser?.MobileNo} onSignOut={signOut} activeMenu="Activity" />
       
       <div className="activities-content" style={{ padding: '40px 24px' }}>
         <Routes>

@@ -55,6 +55,35 @@
   font-style: italic;
 }
 
+.userlist-filters {
+  margin: 0 24px 14px 24px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.userlist-search-input {
+  border: 1px solid var(--clr-border);
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-size: 0.82rem;
+  color: var(--clr-text);
+  background: var(--clr-bg-accent-1);
+  outline: none;
+  width: 240px;
+  transition: all 0.2s ease;
+}
+
+.userlist-search-input:focus {
+  border-color: var(--clr-primary);
+  background: var(--clr-card);
+  box-shadow: 0 0 0 2px var(--clr-shadow);
+}
+
+.userlist-search-input::placeholder {
+  color: var(--clr-muted);
+}
+
 .userlist-table-wrapper {
   margin: 0 24px 20px 24px;
   overflow: hidden; /* For rounded corners */
@@ -134,4 +163,43 @@
 
 .userlist-icon-btn.userlist-danger {
   color: #e74c3c; /* A distinct color for delete actions */
+}
+
+@media (max-width: 768px) {
+  .userlist-card,
+  .activitylist-card {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 14px;
+  }
+
+  .userlist-header,
+  .activitylist-header {
+    padding: 14px 12px 0;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .userlist-header h2 {
+    font-size: 1.05rem;
+  }
+
+  .userlist-table-wrapper {
+    margin: 0 12px 12px 12px;
+    overflow-x: auto;
+  }
+
+  .userlist-filters {
+    margin: 0 12px 10px 12px;
+    gap: 8px;
+  }
+
+  .userlist-search-input {
+    width: 100%;
+  }
+
+  .userlist-table {
+    min-width: 680px;
+  }
 }

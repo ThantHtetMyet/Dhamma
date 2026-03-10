@@ -36,7 +36,7 @@ export default function ActivityDetail({ activity, onEdit, onBack }) {
 
         <div className="detail-item">
           <span className="detail-label">Assigned User</span>
-          <span className="detail-value">{activity.User?.FullName || activity.UserID}</span>
+          <span className="detail-value">{activity.User?.FullName || "-"}</span>
         </div>
 
         <div className="detail-row">

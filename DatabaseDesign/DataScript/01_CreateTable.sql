@@ -14,10 +14,10 @@ CREATE TABLE IF NOT EXISTS "UserRole" (
 CREATE TABLE IF NOT EXISTS "User" (
   "ID" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   "UserRoleID" uuid NOT NULL,
-  "UserID" varchar(100) NOT NULL,
   "FullName" text NOT NULL,
-  "Email" text NOT NULL,
   "MobileNo" text NOT NULL,
+  "HealthIssues" text[] NOT NULL DEFAULT '{}'::text[],
+  "Remark" varchar(500) NULL,
   "LoginPassword" varchar(100) NOT NULL,
   "LastLogin" timestamptz NOT NULL,
   "IsActive" boolean NOT NULL,
@@ -82,6 +82,10 @@ ALTER TABLE "UserPermissions"
   ADD CONSTRAINT "FK_UserPermissions_UpdatedBy"
   FOREIGN KEY ("UpdatedBy")
   REFERENCES "User" ("ID");
+
+CREATE UNIQUE INDEX IF NOT EXISTS "UX_User_MobileNo_Active"
+ON "User" ("MobileNo")
+WHERE "IsDeleted" = false;
 
 CREATE TABLE IF NOT EXISTS "Activity" (
   "ID" uuid PRIMARY KEY DEFAULT gen_random_uuid(),

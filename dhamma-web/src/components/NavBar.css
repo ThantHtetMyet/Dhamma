@@ -116,3 +116,40 @@
   stroke: var(--clr-wave);
   transform: translateX(3px);
 }
+
+@media (max-width: 768px) {
+  .nav-bar {
+    padding: 10px 12px;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .nav-left {
+    gap: 10px;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .nav-links {
+    gap: 6px;
+  }
+
+  .nav-link {
+    padding: 7px 10px;
+    font-size: 0.95rem;
+  }
+
+  .nav-actions {
+    margin-left: auto;
+    min-width: 0;
+    gap: 8px;
+  }
+
+  .nav-user {
+    max-width: 120px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.9rem;
+  }
+}

@@ -6,16 +6,24 @@ import { signupRaw } from "../../services/auth";
 import dhammaImage from "../../images/dhamma_image.jpg";
 import "../Signin/Signin.css";
 
+const healthIssueOptions = [
+  "ဆီးချို",
+  "သွေးတိုး",
+  "နှလုံးရောဂါ",
+  "ပန်းနာရင်ကျပ်",
+  "ကျောက်ကပ်ရောဂါ",
+  "Allergy",
+  "အဆစ်အမြစ်ရောင်",
+];
+
 export default function Signup() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    userID: "",
     fullName: "",
-    email: "",
     mobileNo: "",
-    loginPassword: "",
-    confirmPassword: "",
+    healthIssues: [],
+    remark: "",
   });
   const [transparentHeroSrc, setTransparentHeroSrc] = useState(dhammaImage);
   const [modalConfig, setModalConfig] = useState({
@@ -39,31 +47,28 @@ export default function Signup() {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   }
 
+  function handleHealthIssueToggle(issue) {
+    setFormData((prev) => ({
+      ...prev,
+      healthIssues: prev.healthIssues.includes(issue)
+        ? prev.healthIssues.filter((item) => item !== issue)
+        : [...prev.healthIssues, issue],
+    }));
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     setLoading(true);
     const startTime = Date.now();
     const normalizedData = {
-      userID: formData.userID.trim(),
       fullName: formData.fullName.trim(),
-      email: formData.email.trim(),
       mobileNo: formData.mobileNo.trim(),
-      loginPassword: formData.loginPassword,
-      confirmPassword: formData.confirmPassword,
+      healthIssues: formData.healthIssues,
+      remark: formData.remark.trim(),
     };
 
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const phonePattern = /^[0-9+()\s-]{7,20}$/;
 
-    if (!normalizedData.userID || normalizedData.userID.length < 3) {
-      const elapsed = Date.now() - startTime;
-      if (elapsed < 5000) {
-        await new Promise((resolve) => setTimeout(resolve, 5000 - elapsed));
-      }
-      setLoading(false);
-      showModal("error", "Validation Error", "UserID must be at least 3 characters long.");
-      return;
-    }
     if (!normalizedData.fullName || normalizedData.fullName.length < 3) {
       const elapsed = Date.now() - startTime;
       if (elapsed < 5000) {
@@ -73,15 +78,6 @@ export default function Signup() {
       showModal("error", "Validation Error", "Full Name must be at least 3 characters long.");
       return;
     }
-    if (!emailPattern.test(normalizedData.email)) {
-      const elapsed = Date.now() - startTime;
-      if (elapsed < 5000) {
-        await new Promise((resolve) => setTimeout(resolve, 5000 - elapsed));
-      }
-      setLoading(false);
-      showModal("error", "Validation Error", "Please enter a valid email address.");
-      return;
-    }
     if (!phonePattern.test(normalizedData.mobileNo)) {
       const elapsed = Date.now() - startTime;
       if (elapsed < 5000) {
@@ -89,24 +85,6 @@ export default function Signup() {
       }
       setLoading(false);
       showModal("error", "Validation Error", "Please enter a valid mobile number.");
-      return;
-    }
-    if (normalizedData.loginPassword !== normalizedData.confirmPassword) {
-      const elapsed = Date.now() - startTime;
-      if (elapsed < 5000) {
-        await new Promise((resolve) => setTimeout(resolve, 5000 - elapsed));
-      }
-      setLoading(false);
-      showModal("error", "Validation Error", "Passwords do not match. Please verify your password.");
-      return;
-    }
-    if (normalizedData.loginPassword.length < 6) {
-      const elapsed = Date.now() - startTime;
-      if (elapsed < 5000) {
-        await new Promise((resolve) => setTimeout(resolve, 5000 - elapsed));
-      }
-      setLoading(false);
-      showModal("error", "Weak Password", "Password must be at least 6 characters long.");
       return;
     }
     try {
@@ -121,7 +99,7 @@ export default function Signup() {
         showModal(type, res.status === 409 ? "Account Exists" : "Registration Failed", data?.message || data?.error || "Unable to sign up.");
         return;
       }
-      showModal("success", "Account Created", "Your account has been successfully created! You can now sign in.", () => {
+      showModal("success", "Account Created", 'Your account has been successfully created. Default password is "P@ssw0rd". You can now sign in.', () => {
         navigate("/signin");
       });
     } catch {
@@ -211,44 +189,44 @@ export default function Signup() {
           <div className="auth-form-container auth-single-form">
             <form className="auth-form" onSubmit={handleSubmit} autoComplete="off">
               <div className="auth-form-group">
-                <input className="auth-input" type="text" name="userID" placeholder=" " value={formData.userID} onChange={handleChange} required />
-                <label className="auth-label">UserID</label>
-              </div>
-              <div className="auth-form-group">
                 <input className="auth-input" type="text" name="fullName" placeholder=" " value={formData.fullName} onChange={handleChange} required />
                 <label className="auth-label">Full Name</label>
-              </div>
-              <div className="auth-form-group">
-                <input className="auth-input" type="email" name="email" placeholder=" " value={formData.email} onChange={handleChange} required />
-                <label className="auth-label">Email</label>
               </div>
               <div className="auth-form-group">
                 <input className="auth-input" type="tel" name="mobileNo" placeholder=" " value={formData.mobileNo} onChange={handleChange} required />
                 <label className="auth-label">Mobile No</label>
               </div>
               <div className="auth-form-group">
-                <input
-                  className="auth-input"
-                  type="password"
-                  name="loginPassword"
-                  placeholder=" "
-                  value={formData.loginPassword}
-                  onChange={handleChange}
-                  required
-                />
-                <label className="auth-label">Password</label>
+                <label className="auth-static-label">Health Information</label>
+                <p className="auth-health-subtitle">Select all that apply</p>
+                <div className="auth-health-grid">
+                  {healthIssueOptions.map((issue) => (
+                    <label
+                      key={issue}
+                      className={`auth-health-chip ${formData.healthIssues.includes(issue) ? "selected" : ""}`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={formData.healthIssues.includes(issue)}
+                        onChange={() => handleHealthIssueToggle(issue)}
+                      />
+                      <span>{issue}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
-              <div className="auth-form-group">
-                <input
-                  className="auth-input"
-                  type="password"
-                  name="confirmPassword"
-                  placeholder=" "
-                  value={formData.confirmPassword}
+              <div className="auth-form-group auth-textarea-group">
+                <label className="auth-static-label" htmlFor="signup-remark">Remark</label>
+                <textarea
+                  id="signup-remark"
+                  name="remark"
+                  className="auth-textarea"
+                  value={formData.remark}
                   onChange={handleChange}
-                  required
+                  rows="3"
+                  maxLength="500"
+                  placeholder="Optional note about health or support needs..."
                 />
-                <label className="auth-label">Confirm Password</label>
               </div>
               <button className="auth-button auth-signin-btn" type="submit" disabled={loading}>
                 {loading ? "Creating account..." : "Create Account"}

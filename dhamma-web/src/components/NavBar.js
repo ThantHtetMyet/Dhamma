@@ -13,9 +13,6 @@ export default function NavBar({ userName, onSignOut, activeMenu = "User" }) {
           <Link to="/users" className={`nav-link ${activeMenu === "User" ? "nav-link-active" : ""}`}>
             User
           </Link>
-          <Link to="/activity" className={`nav-link ${activeMenu === "Activity" ? "nav-link-active" : ""}`}>
-            Activity
-          </Link>
         </div>
       </div>
       <div className="nav-actions">

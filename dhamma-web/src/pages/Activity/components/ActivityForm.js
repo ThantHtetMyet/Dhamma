@@ -36,7 +36,7 @@ export default function ActivityForm({
           <option value="">Select User</option>
           {users.map((user) => (
             <option key={user.ID} value={user.ID}>
-              {user.FullName} ({user.UserID})
+              {user.FullName} ({user.MobileNo})
             </option>
           ))}
         </select>

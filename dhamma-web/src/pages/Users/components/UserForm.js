@@ -3,25 +3,15 @@ import "./UserForm.css";
 
 export default function UserForm({
   formData,
-  roles,
   editingUserId,
   onChange,
+  healthIssueOptions,
+  onHealthIssueToggle,
   onSubmit,
   onCancel,
 }) {
   return (
     <form className="user-form" onSubmit={onSubmit}>
-      <div className="form-group">
-        <label htmlFor="userID">User ID</label>
-        <input
-          type="text"
-          id="userID"
-          name="userID"
-          value={formData.userID}
-          onChange={onChange}
-          required
-        />
-      </div>
       <div className="form-group">
         <label htmlFor="fullName">Full Name</label>
         <input
@@ -29,17 +19,6 @@ export default function UserForm({
           id="fullName"
           name="fullName"
           value={formData.fullName}
-          onChange={onChange}
-          required
-        />
-      </div>
-      <div className="form-group">
-        <label htmlFor="email">Email</label>
-        <input
-          type="email"
-          id="email"
-          name="email"
-          value={formData.email}
           onChange={onChange}
           required
         />
@@ -55,46 +34,36 @@ export default function UserForm({
           required
         />
       </div>
-      <div className="form-group">
-        <label htmlFor="loginPassword">Password</label>
-        <input
-          type="password"
-          id="loginPassword"
-          name="loginPassword"
-          value={formData.loginPassword}
-          onChange={onChange}
-          required={!editingUserId}
-        />
-        {editingUserId && (
-          <p className="password-hint">Leave blank to keep current password</p>
-        )}
-      </div>
-      <div className="form-group">
-        <label htmlFor="roleId">Role</label>
-        <select
-          id="roleId"
-          name="roleId"
-          value={formData.roleId}
-          onChange={onChange}
-          required
-        >
-          <option value="">Select Role</option>
-          {roles.map((role) => (
-            <option key={role.ID} value={role.ID}>
-              {role.RoleName}
-            </option>
+      <div className="form-group health-issues-group">
+        <label>Health Information</label>
+        <p className="health-issues-subtitle">Select all that apply</p>
+        <div className="health-issues-grid">
+          {healthIssueOptions.map((issue) => (
+            <label
+              key={issue}
+              className={`health-issue-item ${formData.healthIssues.includes(issue) ? "selected" : ""}`}
+            >
+              <input
+                type="checkbox"
+                checked={formData.healthIssues.includes(issue)}
+                onChange={() => onHealthIssueToggle(issue)}
+              />
+              <span className="health-issue-text">{issue}</span>
+            </label>
           ))}
-        </select>
+        </div>
       </div>
-      <div className="form-group checkbox-group">
-        <input
-          type="checkbox"
-          id="isActive"
-          name="isActive"
-          checked={formData.isActive}
+      <div className="form-group">
+        <label htmlFor="remark">Remark</label>
+        <textarea
+          id="remark"
+          name="remark"
+          value={formData.remark}
           onChange={onChange}
+          rows="3"
+          maxLength="500"
+          placeholder="Optional note about this user..."
         />
-        <label htmlFor="isActive">Is Active</label>
       </div>
       <div className="form-actions">
         <button type="submit" className="btn btn-primary">

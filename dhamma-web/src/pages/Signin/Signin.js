@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import AlertModal from "../../components/AlertModal";
 import LoadingOverlay from "../../components/LoadingOverlay";
 import { loginRaw, saveToken } from "../../services/auth";
@@ -9,7 +9,7 @@ import "./Signin.css";
 export default function Signin() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({ userID: "", password: "" });
+  const [formData, setFormData] = useState({ mobileNo: "", password: "" });
   const [transparentHeroSrc, setTransparentHeroSrc] = useState(dhammaImage);
   const [modalConfig, setModalConfig] = useState({
     isOpen: false,
@@ -53,7 +53,8 @@ export default function Signin() {
       if (data?.user) {
         sessionStorage.setItem("user", JSON.stringify(data.user));
       }
-      navigate("/users", { replace: true });
+      window.location.hash = "/users";
+      window.location.reload();
     } catch {
       const elapsed = Date.now() - startTime;
       if (elapsed < 3000) {
@@ -141,8 +142,8 @@ export default function Signin() {
           <div className="auth-form-container auth-single-form">
             <form className="auth-form" onSubmit={handleSubmit} autoComplete="off">
               <div className="auth-form-group">
-                <input className="auth-input" type="text" name="userID" placeholder=" " value={formData.userID} onChange={handleLoginChange} required />
-                <label className="auth-label">UserID</label>
+                <input className="auth-input" type="tel" name="mobileNo" placeholder=" " value={formData.mobileNo} onChange={handleLoginChange} required />
+                <label className="auth-label">Mobile No</label>
               </div>
               <div className="auth-form-group">
                 <input className="auth-input" type="password" name="password" placeholder=" " value={formData.password} onChange={handleLoginChange} required />
@@ -151,13 +152,10 @@ export default function Signin() {
               <button className="auth-button auth-signin-btn" type="submit" disabled={loading}>
                 {loading ? "Signing In..." : "Sign In"}
               </button>
-              <div className="auth-footer-links auth-signin-links">
-                <Link className="auth-link cursor-pointer" to="/signup">
-                  Sign Up
-                </Link>
-                <Link to="/forgot-password" id="forgot-password-link" className="auth-link">
-                  Forgot Password?
-                </Link>
+              <div className="auth-footer-links auth-signin-links auth-signin-findqr-links">
+                <button type="button" id="find-qr-link" className="auth-link auth-link-button" onClick={() => navigate("/find-qr")}>
+                  Find QR
+                </button>
               </div>
             </form>
           </div>

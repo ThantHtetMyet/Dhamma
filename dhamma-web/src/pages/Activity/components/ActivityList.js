@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import "./ActivityList.css";
 import Pagination from "../../../components/Pagination";
 
@@ -51,7 +51,7 @@ export default function ActivityList({
                 Name {getSortIcon("Name")}
               </th>
               <th onClick={() => handleSort("UserID")} style={{ cursor: 'pointer' }}>
-                User {getSortIcon("UserID")}
+                Assigned User {getSortIcon("UserID")}
               </th>
               <th onClick={() => handleSort("StartDate")} style={{ cursor: 'pointer' }}>
                 Start Date {getSortIcon("StartDate")}
@@ -68,7 +68,7 @@ export default function ActivityList({
             {activities.map((activity) => (
               <tr key={activity.ID} onDoubleClick={() => onRowDoubleClick(activity)}>
                 <td className="font-bold">{activity.Name}</td>
-                <td>{activity.User?.FullName || activity.UserID}</td>
+                <td>{activity.User?.FullName || "-"}</td>
                 <td>{new Date(activity.StartDate).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</td>
                 <td>{new Date(activity.EndDate).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</td>
                 <td className="duration-col">{calculateDuration(activity.StartDate, activity.EndDate)}</td>

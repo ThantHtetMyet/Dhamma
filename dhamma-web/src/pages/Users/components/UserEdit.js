@@ -1,49 +1,57 @@
 import React from "react";
 import "./UserEdit.css";
 
-export default function UserEdit({ user, canUpdate, canDelete, onEdit, onDelete, onBack, onToggleActivities }) {
+export default function UserEdit({ user, canUpdate, canDelete, canGenerateQr, onEdit, onDelete, onBack, onGenerateQr }) {
   if (!user) return null;
   return (
     <div className="useredit-card">
       <div className="useredit-body">
         <div className="useredit-name-section">
-          <div className="useredit-name-header">
+          <div className="useredit-top-row">
             <button className="useredit-back-btn" onClick={onBack} title="Back to list">
               ←
             </button>
-            <div className="useredit-name-group">
-              <div className="useredit-name">{user.FullName}</div>
-              <div className={`useredit-status-badge ${user.IsActive ? "status-active" : "status-inactive"}`}>
-                {user.IsActive ? "● Active Account" : "○ Inactive Account"}
-              </div>
+            <div className="useredit-actions">
+              {canGenerateQr ? (
+                <button
+                  className="useredit-icon-btn action-qr"
+                  type="button"
+                  onClick={() => onGenerateQr(user)}
+                  title="Generate QR"
+                  aria-label="Generate QR"
+                >
+                  QR
+                </button>
+              ) : null}
+              {canUpdate ? (
+                <button
+                  className="useredit-icon-btn action-edit"
+                  type="button"
+                  onClick={() => onEdit(user)}
+                  title="Edit User"
+                  aria-label="Edit User"
+                >
+                  ✎
+                </button>
+              ) : null}
+              {canDelete ? (
+                <button
+                  className="useredit-icon-btn action-delete"
+                  type="button"
+                  onClick={() => onDelete(user)}
+                  title="Delete User"
+                  aria-label="Delete User"
+                >
+                  🗑
+                </button>
+              ) : null}
             </div>
           </div>
-          
-          <div className="useredit-actions">
-            {canUpdate ? (
-              <button className="useredit-icon-btn" type="button" onClick={() => onEdit(user)} title="Edit User">
-                ✏️
-              </button>
-            ) : null}
-            <button className="useredit-icon-btn activities-toggle-btn" type="button" onClick={() => onToggleActivities()} title="Show Activity">
-              📋
-            </button>
-            {canDelete ? (
-              <button className="useredit-icon-btn useredit-danger" type="button" onClick={() => onDelete(user)} title="Delete User">
-                🗑️
-              </button>
-            ) : null}
-          </div>
         </div>
 
         <div className="useredit-info-item">
-          <span className="useredit-label">User ID</span>
-          <span className="useredit-value">{user.UserID}</span>
-        </div>
-
-        <div className="useredit-info-item">
-          <span className="useredit-label">Email Address</span>
-          <span className="useredit-value">{user.Email}</span>
+          <span className="useredit-label">User Name</span>
+          <span className="useredit-value">{user.FullName}</span>
         </div>
 
         <div className="useredit-info-item">
@@ -52,8 +60,15 @@ export default function UserEdit({ user, canUpdate, canDelete, onEdit, onDelete,
         </div>
 
         <div className="useredit-info-item">
-          <span className="useredit-label">Assigned Role</span>
-          <span className="useredit-value">{user.UserRole?.RoleName || "Normal"}</span>
+          <span className="useredit-label">Health Information</span>
+          <span className="useredit-value">
+            {Array.isArray(user.HealthIssues) && user.HealthIssues.length > 0 ? user.HealthIssues.join(", ") : "None"}
+          </span>
+        </div>
+
+        <div className="useredit-info-item">
+          <span className="useredit-label">Remark</span>
+          <span className="useredit-value">{user.Remark || "-"}</span>
         </div>
       </div>
     </div>
