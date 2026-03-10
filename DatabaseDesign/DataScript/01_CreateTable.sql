@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS "User" (
   "HealthIssues" text[] NOT NULL DEFAULT '{}'::text[],
   "Remark" varchar(500) NULL,
   "LoginPassword" varchar(100) NOT NULL,
+  "PatternLock" varchar(255) NULL,
   "LastLogin" timestamptz NOT NULL,
   "IsActive" boolean NOT NULL,
   "IsDeleted" boolean NOT NULL,
@@ -27,6 +28,9 @@ CREATE TABLE IF NOT EXISTS "User" (
   "CreatedBy" uuid NULL,
   "UpdatedBy" uuid NULL
 );
+
+ALTER TABLE "User"
+  ADD COLUMN IF NOT EXISTS "PatternLock" varchar(255) NULL;
 
 CREATE TABLE IF NOT EXISTS "UserPermissions" (
   "ID" uuid PRIMARY KEY DEFAULT gen_random_uuid(),

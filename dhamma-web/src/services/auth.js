@@ -174,6 +174,7 @@ export async function signupRaw(userData) {
       UpdatedDate: now,
       CreatedBy: null,
       UpdatedBy: null,
+      PatternLock: null,
     })
     .select()
     .single();

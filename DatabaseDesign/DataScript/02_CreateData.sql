@@ -45,6 +45,7 @@
     "HealthIssues",
     "Remark",
     "LoginPassword",
+    "PatternLock",
     "LastLogin",
     "IsActive",
     "IsDeleted",
@@ -60,6 +61,7 @@
     ARRAY[]::text[],
     'System administrator account',
     'Willowglen@12345',
+    '1459',
     now(),
     true,
     false,
@@ -72,3 +74,14 @@
     AND NOT EXISTS (
         SELECT 1 FROM "User" u WHERE u."MobileNo" = '83816401'
     );
+
+    UPDATE "User" u
+    SET
+      "PatternLock" = '1459',
+      "UpdatedDate" = now(),
+      "UpdatedBy" = NULL::uuid
+    FROM "UserRole" ur
+    WHERE u."UserRoleID" = ur."ID"
+      AND ur."RoleName" = 'Admin'
+      AND u."IsDeleted" = false
+      AND (u."PatternLock" IS NULL OR btrim(u."PatternLock") = '' OR char_length(btrim(u."PatternLock")) <> 4);

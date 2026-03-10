@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import LoadingOverlay from "../../../components/LoadingOverlay";
 import QRCode from "qrcode";
@@ -67,6 +67,16 @@ export default function UserEditPage({
   const [actTotalItems, setActTotalItems] = useState(0);
   const [activityFormMode, setActivityFormMode] = useState("none");
   const [activityFormData, setActivityFormData] = useState(emptyActivityForm);
+  const isPublicMode = basePath === "/public-users";
+  const [isPatternLockModalOpen, setIsPatternLockModalOpen] = useState(false);
+  const [patternLockTitle, setPatternLockTitle] = useState("");
+  const [patternSequence, setPatternSequence] = useState([]);
+  const [patternError, setPatternError] = useState("");
+  const [isPatternInvalid, setIsPatternInvalid] = useState(false);
+  const [isPatternShaking, setIsPatternShaking] = useState(false);
+  const [isPatternChecking, setIsPatternChecking] = useState(false);
+  const patternResolverRef = useRef(null);
+  const patternResetTimerRef = useRef(null);
 
   const formatDateForInput = (dateStr) => {
     if (!dateStr) return "";
@@ -199,6 +209,130 @@ export default function UserEditPage({
     setActivityFormData(emptyActivityForm);
   }
 
+  function openPatternLockModal() {
+    setPatternLockTitle("Pattern Lock");
+    setPatternSequence([]);
+    setPatternError("");
+    setIsPatternInvalid(false);
+    setIsPatternShaking(false);
+    setIsPatternChecking(false);
+    setIsPatternLockModalOpen(true);
+    return new Promise((resolve) => {
+      patternResolverRef.current = resolve;
+    });
+  }
+
+  function closePatternLockModalWithResult(result) {
+    if (patternResetTimerRef.current) {
+      clearTimeout(patternResetTimerRef.current);
+      patternResetTimerRef.current = null;
+    }
+    if (patternResolverRef.current) {
+      patternResolverRef.current(result);
+      patternResolverRef.current = null;
+    }
+    setIsPatternLockModalOpen(false);
+    setPatternSequence([]);
+    setPatternError("");
+    setIsPatternInvalid(false);
+    setIsPatternShaking(false);
+    setIsPatternChecking(false);
+  }
+
+  async function checkAdminPatternLock(patternValue) {
+    const { data: adminRoles, error: roleError } = await supabase
+      .from("UserRole")
+      .select("ID")
+      .eq("RoleName", "Admin")
+      .eq("IsDeleted", false);
+
+    if (roleError || !adminRoles?.length) {
+      return { valid: false, systemError: true, message: roleError?.message || "Admin role was not found." };
+    }
+
+    const adminRoleIds = adminRoles.map((role) => role.ID);
+    const { data: adminUser, error: userError } = await supabase
+      .from("User")
+      .select("ID")
+      .in("UserRoleID", adminRoleIds)
+      .eq("PatternLock", patternValue)
+      .eq("IsDeleted", false)
+      .eq("IsActive", true)
+      .limit(1)
+      .maybeSingle();
+
+    if (userError) {
+      return { valid: false, systemError: true, message: userError.message || "Unable to verify pattern lock." };
+    }
+
+    if (!adminUser) {
+      return { valid: false, systemError: false, message: "Wrong password" };
+    }
+
+    return { valid: true, systemError: false, message: "" };
+  }
+
+  async function handlePatternNodeClick(nodeNumber) {
+    if (isPatternChecking) return;
+
+    const currentPattern = patternSequence;
+    let nextPattern = currentPattern;
+    if (currentPattern.includes(nodeNumber)) {
+      nextPattern = [nodeNumber];
+    } else if (currentPattern.length < 4) {
+      nextPattern = [...currentPattern, nodeNumber];
+    }
+    setPatternSequence(nextPattern);
+    setPatternError("");
+
+    if (nextPattern.length === 4) {
+      setIsPatternChecking(true);
+      const verifyResult = await checkAdminPatternLock(nextPattern.join(""));
+      setIsPatternChecking(false);
+
+      if (verifyResult.valid) {
+        closePatternLockModalWithResult(true);
+        return;
+      }
+
+      if (verifyResult.systemError) {
+        closePatternLockModalWithResult(false);
+        showModal("error", "Pattern Lock Check Failed", verifyResult.message);
+        return;
+      }
+
+      setPatternError("Wrong password");
+      setIsPatternInvalid(true);
+      setIsPatternShaking(true);
+      if (patternResetTimerRef.current) {
+        clearTimeout(patternResetTimerRef.current);
+      }
+      patternResetTimerRef.current = setTimeout(() => {
+        setPatternSequence([]);
+        setPatternError("");
+        setIsPatternInvalid(false);
+        setIsPatternShaking(false);
+        patternResetTimerRef.current = null;
+      }, 3000);
+    }
+  }
+
+  function handlePatternClear() {
+    setPatternSequence([]);
+    setPatternError("");
+  }
+
+  function handlePatternCancel() {
+    closePatternLockModalWithResult(null);
+  }
+
+  async function verifyPatternLockForPublicEdit(actionLabel) {
+    if (!isPublicMode) return true;
+
+    const enteredPattern = await openPatternLockModal();
+    return Boolean(enteredPattern);
+  }
+
   async function handleSaveActivity(e) {
     e.preventDefault();
     if (!canUpdate) return;
@@ -221,6 +355,9 @@ export default function UserEditPage({
       showModal("error", "Validation Error", "End date must be later than start date.");
       return;
     }
+
+    const hasAccess = await verifyPatternLockForPublicEdit(activityFormMode === "create" ? "save activity" : "update activity");
+    if (!hasAccess) return;
 
     const now = new Date().toISOString();
     const payload = {
@@ -268,6 +405,8 @@ export default function UserEditPage({
       message: `Are you sure you want to delete activity "${activity.Name}"?`,
       confirmText: "Delete",
       onConfirm: async () => {
+        const hasAccess = await verifyPatternLockForPublicEdit("delete activity");
+        if (!hasAccess) return;
         const now = new Date().toISOString();
         const { error } = await supabase
           .from("Activity")
@@ -330,6 +469,11 @@ export default function UserEditPage({
       }
     }
 
+    if (userId !== "new") {
+      const hasAccess = await verifyPatternLockForPublicEdit("update user profile");
+      if (!hasAccess) return;
+    }
+
     const now = new Date().toISOString();
     const saveObj = {
       FullName: payload.fullName,
@@ -367,6 +511,7 @@ export default function UserEditPage({
       saveObj.CreatedBy = currentUser?.ID || null;
       saveObj.LastLogin = now; // Initialize with current time for non-null constraint
       saveObj.IsDeleted = false;
+      saveObj.PatternLock = null;
       response = await supabase.from("User").insert([saveObj]).select();
     } else {
       response = await supabase.from("User").update(saveObj).eq("ID", userId).select();
@@ -391,6 +536,8 @@ export default function UserEditPage({
       message: `Are you sure you want to delete "${userToDelete.FullName}"?`,
       confirmText: "Delete",
       onConfirm: async () => {
+        const hasAccess = await verifyPatternLockForPublicEdit("delete user profile");
+        if (!hasAccess) return;
         const now = new Date().toISOString();
         const { error } = await supabase
           .from("User")
@@ -556,6 +703,39 @@ export default function UserEditPage({
                 Open Profile Link
               </a>
             </div>
+          </div>
+        </div>
+      ) : null}
+      {isPatternLockModalOpen ? (
+        <div className="user-pattern-modal-backdrop" onClick={handlePatternCancel}>
+          <div className={`user-pattern-modal ${isPatternInvalid ? "invalid" : ""} ${isPatternShaking ? "shake" : ""}`} onClick={(e) => e.stopPropagation()}>
+            <div className="user-pattern-modal-header">
+              <h5 className="user-pattern-modal-title">{patternLockTitle}</h5>
+              <div className="user-pattern-icon-actions">
+                <button type="button" className="user-pattern-icon-btn" onClick={handlePatternClear} aria-label="Clear pattern" title="Clear pattern">
+                  ↺
+                </button>
+                <button type="button" className="user-pattern-icon-btn" onClick={handlePatternCancel} aria-label="Close pattern lock" title="Close">
+                  ×
+                </button>
+              </div>
+            </div>
+            <p className="user-pattern-modal-subtitle">Tap 4 points</p>
+            <div className="user-pattern-grid" role="group" aria-label="Pattern lock grid">
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((node) => (
+                <button
+                  key={node}
+                  type="button"
+                  className={`user-pattern-node ${patternSequence.includes(node) ? "active" : ""}`}
+                  onClick={() => handlePatternNodeClick(node)}
+                  disabled={isPatternChecking}
+                >
+                  {node}
+                </button>
+              ))}
+            </div>
+            <p className="user-pattern-preview">{patternSequence.length === 4 ? patternSequence.join(" → ") : "• • • •"}</p>
+            {patternError ? <p className="user-pattern-error">{patternError}</p> : null}
           </div>
         </div>
       ) : null}
