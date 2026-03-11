@@ -1,18 +1,18 @@
 {
   "files": {
-    "main.css": "/Dhamma/static/css/main.d609e47a.css",
-    "main.js": "/Dhamma/static/js/main.6eb188a2.js",
+    "main.css": "/Dhamma/static/css/main.c7610835.css",
+    "main.js": "/Dhamma/static/js/main.8c7a7be9.js",
     "static/js/453.7a680650.chunk.js": "/Dhamma/static/js/453.7a680650.chunk.js",
     "static/media/dhamma_image.jpg": "/Dhamma/static/media/dhamma_image.d82b0e376e402addaad1.jpg",
     "static/media/dhamma_nav_icon.png": "/Dhamma/static/media/dhamma_nav_icon.fa98eeb34a16a284d12b.png",
     "static/media/loading_image.png": "/Dhamma/static/media/loading_image.fa98eeb34a16a284d12b.png",
     "index.html": "/Dhamma/index.html",
-    "main.d609e47a.css.map": "/Dhamma/static/css/main.d609e47a.css.map",
-    "main.6eb188a2.js.map": "/Dhamma/static/js/main.6eb188a2.js.map",
+    "main.c7610835.css.map": "/Dhamma/static/css/main.c7610835.css.map",
+    "main.8c7a7be9.js.map": "/Dhamma/static/js/main.8c7a7be9.js.map",
     "453.7a680650.chunk.js.map": "/Dhamma/static/js/453.7a680650.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.d609e47a.css",
-    "static/js/main.6eb188a2.js"
+    "static/css/main.c7610835.css",
+    "static/js/main.8c7a7be9.js"
   ]
 }
