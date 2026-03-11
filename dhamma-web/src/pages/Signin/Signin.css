@@ -365,8 +365,132 @@
   font-weight: 500;
 }
 
-.auth-signin-findqr-links {
+.auth-pattern-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(30, 22, 18, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 22px;
+  z-index: 60;
+}
+
+.auth-pattern-modal {
+  width: min(92vw, 390px);
+  background: var(--clr-card);
+  border: 1px solid rgba(150, 118, 103, 0.22);
+  border-radius: 22px;
+  box-shadow: 0 28px 60px -30px rgba(46, 27, 21, 0.7);
+  padding: 20px;
+}
+
+.auth-pattern-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.auth-pattern-modal-title {
+  margin: 0;
+  color: var(--clr-text);
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.auth-pattern-close-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid rgba(150, 118, 103, 0.28);
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--clr-text);
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.auth-pattern-modal-subtitle {
+  margin: 0 0 14px;
+  color: var(--clr-muted);
+  font-size: 0.9rem;
+}
+
+.auth-pattern-phone-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.auth-pattern-toolbar {
+  display: flex;
   justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+.auth-pattern-clear-btn {
+  border: 1px solid var(--clr-border);
+  border-radius: 10px;
+  background: var(--clr-surface);
+  color: var(--clr-text);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.auth-pattern-grid {
+  --pattern-node-size: 60px;
+  display: grid;
+  grid-template-columns: repeat(3, var(--pattern-node-size));
+  gap: 10px;
+  justify-content: center;
+}
+
+.auth-pattern-node {
+  width: var(--pattern-node-size);
+  height: var(--pattern-node-size);
+  border-radius: 50%;
+  border: 2px solid #d8c5bd;
+  background: #fff;
+  color: var(--clr-text);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.auth-pattern-node.active {
+  background: #d9a66f;
+  border-color: #c0885d;
+  color: #fff;
+}
+
+.auth-pattern-preview {
+  margin: 12px 0 0;
+  text-align: center;
+  color: #8b6e60;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.auth-pattern-error {
+  margin: 10px 0 0;
+  text-align: center;
+  color: #b42318;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+@media (max-width: 600px) {
+  .auth-pattern-modal {
+    padding: 18px 16px;
+  }
+
+  .auth-pattern-grid {
+    --pattern-node-size: 54px;
+    gap: 8px;
+  }
 }
 
 @keyframes auth-button-jump {

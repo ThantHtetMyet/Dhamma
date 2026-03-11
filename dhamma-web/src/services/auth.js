@@ -190,6 +190,150 @@ export async function resetPasswordRaw(payload) {
   return requestRaw("/reset-password", payload);
 }
 
+export async function validateAdminPhoneRaw(payload) {
+  const response = (ok, status) => ({ ok, status });
+  const mobileNo = payload?.mobileNo?.trim();
+
+  if (!mobileNo) {
+    return { res: response(false, 400), data: { error: "Mobile number is required." } };
+  }
+
+  const { data: user, error } = await supabase
+    .from("User")
+    .select("ID, MobileNo, IsActive, IsDeleted, UserRole:UserRole!FK_User_UserRole(RoleName)")
+    .eq("MobileNo", mobileNo)
+    .eq("IsDeleted", false)
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    return { res: response(false, 500), data: { error: error.message } };
+  }
+  if (!user) {
+    return { res: response(false, 404), data: { error: "Phone number does not exist." } };
+  }
+  if (!user.IsActive) {
+    return { res: response(false, 403), data: { error: "Account is inactive." } };
+  }
+
+  const roleName = user.UserRole?.RoleName || "";
+  if (roleName.toLowerCase() !== "admin") {
+    return { res: response(false, 403), data: { error: "Phone number exists but is not an admin account." } };
+  }
+
+  return { res: response(true, 200), data: { userId: user.ID } };
+}
+
+export async function verifyAdminOldPatternRaw(payload) {
+  const response = (ok, status) => ({ ok, status });
+  const mobileNo = payload?.mobileNo?.trim();
+  const oldPattern = payload?.oldPattern || "";
+
+  if (!mobileNo) {
+    return { res: response(false, 400), data: { error: "Mobile number is required." } };
+  }
+  if (!oldPattern || oldPattern.length !== 4) {
+    return { res: response(false, 400), data: { error: "Old pattern must be 4 digits." } };
+  }
+
+  const { data: adminRoles, error: roleError } = await supabase
+    .from("UserRole")
+    .select("ID")
+    .eq("RoleName", "Admin")
+    .eq("IsDeleted", false);
+
+  if (roleError) {
+    return { res: response(false, 500), data: { error: roleError.message } };
+  }
+  if (!adminRoles?.length) {
+    return { res: response(false, 404), data: { error: "Admin role was not found." } };
+  }
+
+  const adminRoleIds = adminRoles.map((role) => role.ID);
+  const { data: adminUser, error: userError } = await supabase
+    .from("User")
+    .select("ID, MobileNo, IsActive, IsDeleted, PatternLock")
+    .in("UserRoleID", adminRoleIds)
+    .eq("MobileNo", mobileNo)
+    .eq("IsDeleted", false)
+    .limit(1)
+    .maybeSingle();
+
+  if (userError) {
+    return { res: response(false, 500), data: { error: userError.message } };
+  }
+  if (!adminUser) {
+    return { res: response(false, 404), data: { error: "Admin mobile number was not found." } };
+  }
+  if (!adminUser.IsActive) {
+    return { res: response(false, 403), data: { error: "Admin account is inactive." } };
+  }
+  if ((adminUser.PatternLock || "") !== oldPattern) {
+    return { res: response(false, 401), data: { error: "Old pattern is incorrect." } };
+  }
+
+  return { res: response(true, 200), data: { adminId: adminUser.ID } };
+}
+
+export async function updateAdminPatternLockRaw(payload) {
+  const response = (ok, status) => ({ ok, status });
+  const mobileNo = payload?.mobileNo?.trim();
+  const newPattern = payload?.newPattern || "";
+
+  if (!mobileNo) {
+    return { res: response(false, 400), data: { error: "Mobile number is required." } };
+  }
+  if (!newPattern || newPattern.length !== 4) {
+    return { res: response(false, 400), data: { error: "New pattern must be 4 digits." } };
+  }
+
+  const { data: adminRoles, error: roleError } = await supabase
+    .from("UserRole")
+    .select("ID")
+    .eq("RoleName", "Admin")
+    .eq("IsDeleted", false);
+
+  if (roleError) {
+    return { res: response(false, 500), data: { error: roleError.message } };
+  }
+  if (!adminRoles?.length) {
+    return { res: response(false, 404), data: { error: "Admin role was not found." } };
+  }
+
+  const adminRoleIds = adminRoles.map((role) => role.ID);
+  const { data: adminUser, error: userError } = await supabase
+    .from("User")
+    .select("ID, IsActive")
+    .in("UserRoleID", adminRoleIds)
+    .eq("MobileNo", mobileNo)
+    .eq("IsDeleted", false)
+    .limit(1)
+    .maybeSingle();
+
+  if (userError) {
+    return { res: response(false, 500), data: { error: userError.message } };
+  }
+  if (!adminUser) {
+    return { res: response(false, 404), data: { error: "Admin mobile number was not found." } };
+  }
+  if (!adminUser.IsActive) {
+    return { res: response(false, 403), data: { error: "Admin account is inactive." } };
+  }
+
+  const now = new Date().toISOString();
+  const { error: updateError } = await supabase
+    .from("User")
+    .update({ PatternLock: newPattern, UpdatedDate: now, UpdatedBy: adminUser.ID })
+    .eq("ID", adminUser.ID)
+    .eq("IsDeleted", false);
+
+  if (updateError) {
+    return { res: response(false, 500), data: { error: updateError.message } };
+  }
+
+  return { res: response(true, 200), data: { message: "Pattern lock updated successfully." } };
+}
+
 export function saveToken(token) {
   try {
     localStorage.setItem("auth_token", token);

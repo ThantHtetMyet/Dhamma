@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AlertModal from "../../components/AlertModal";
 import LoadingOverlay from "../../components/LoadingOverlay";
-import { loginRaw, saveToken } from "../../services/auth";
+import { loginRaw, saveToken, updateAdminPatternLockRaw, validateAdminPhoneRaw, verifyAdminOldPatternRaw } from "../../services/auth";
 import dhammaImage from "../../images/dhamma_image.jpg";
 import "./Signin.css";
 
@@ -11,6 +11,13 @@ export default function Signin() {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({ mobileNo: "", password: "" });
   const [transparentHeroSrc, setTransparentHeroSrc] = useState(dhammaImage);
+  const [isChangeLockModalOpen, setIsChangeLockModalOpen] = useState(false);
+  const [changeLockStep, setChangeLockStep] = useState("phone");
+  const [changeLockPhone, setChangeLockPhone] = useState("");
+  const [patternSequence, setPatternSequence] = useState([]);
+  const [changeLockData, setChangeLockData] = useState({ oldPattern: "", newPattern: "" });
+  const [changeLockError, setChangeLockError] = useState("");
+  const [isChangeLockChecking, setIsChangeLockChecking] = useState(false);
   const [modalConfig, setModalConfig] = useState({
     isOpen: false,
     type: "info",
@@ -30,6 +37,139 @@ export default function Signin() {
 
   function handleLoginChange(e) {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  }
+
+  function openChangeLockModal() {
+    setIsChangeLockModalOpen(true);
+    setChangeLockStep("phone");
+    setChangeLockPhone("");
+    setPatternSequence([]);
+    setChangeLockData({ oldPattern: "", newPattern: "" });
+    setChangeLockError("");
+    setIsChangeLockChecking(false);
+  }
+
+  function closeChangeLockModal() {
+    setIsChangeLockModalOpen(false);
+    setChangeLockStep("phone");
+    setChangeLockPhone("");
+    setPatternSequence([]);
+    setChangeLockData({ oldPattern: "", newPattern: "" });
+    setChangeLockError("");
+    setIsChangeLockChecking(false);
+  }
+
+  function getChangeLockTitle() {
+    if (changeLockStep === "phone") return "Change Lock";
+    if (changeLockStep === "old-pattern") return "Old Pattern";
+    if (changeLockStep === "new-pattern") return "New Pattern";
+    return "Confirm Pattern";
+  }
+
+  function getChangeLockSubtitle() {
+    if (changeLockStep === "phone") return "Enter admin phone number";
+    if (changeLockStep === "old-pattern") return "Tap old 4-dot pattern";
+    if (changeLockStep === "new-pattern") return "Tap new 4-dot pattern";
+    return "Tap new pattern again";
+  }
+
+  async function handleChangeLockPhoneSubmit(e) {
+    e.preventDefault();
+    const nextPhone = changeLockPhone.trim();
+    if (!nextPhone) {
+      setChangeLockError("Admin phone number is required.");
+      return;
+    }
+
+    setIsChangeLockChecking(true);
+    const { res, data } = await validateAdminPhoneRaw({ mobileNo: nextPhone });
+    setIsChangeLockChecking(false);
+
+    if (!res.ok) {
+      setChangeLockError(data?.error || "Unable to validate phone number.");
+      return;
+    }
+
+    setChangeLockPhone(nextPhone);
+    setChangeLockError("");
+    setPatternSequence([]);
+    setChangeLockStep("old-pattern");
+  }
+
+  async function processPatternStep(patternValue) {
+    if (changeLockStep === "old-pattern") {
+      setIsChangeLockChecking(true);
+      const { res, data } = await verifyAdminOldPatternRaw({
+        mobileNo: changeLockPhone,
+        oldPattern: patternValue,
+      });
+      setIsChangeLockChecking(false);
+      if (!res.ok) {
+        setPatternSequence([]);
+        setChangeLockError(data?.error || "Old pattern is incorrect.");
+        return;
+      }
+      setChangeLockData((prev) => ({ ...prev, oldPattern: patternValue }));
+      setPatternSequence([]);
+      setChangeLockError("");
+      setChangeLockStep("new-pattern");
+      return;
+    }
+
+    if (changeLockStep === "new-pattern") {
+      setChangeLockData((prev) => ({ ...prev, newPattern: patternValue }));
+      setPatternSequence([]);
+      setChangeLockError("");
+      setChangeLockStep("confirm-pattern");
+      return;
+    }
+
+    if (patternValue !== changeLockData.newPattern) {
+      setPatternSequence([]);
+      setChangeLockError("Pattern confirmation does not match.");
+      return;
+    }
+
+    setIsChangeLockChecking(true);
+    const { res, data } = await updateAdminPatternLockRaw({
+      mobileNo: changeLockPhone,
+      newPattern: patternValue,
+    });
+    setIsChangeLockChecking(false);
+
+    if (!res.ok) {
+      setPatternSequence([]);
+      setChangeLockError(data?.error || "Could not update pattern lock.");
+      return;
+    }
+
+    closeChangeLockModal();
+    showModal("success", "Change Lock", "Pattern lock updated successfully.");
+  }
+
+  async function handlePatternNodeClick(nodeNumber) {
+    if (isChangeLockChecking) return;
+
+    const currentPattern = patternSequence;
+    let nextPattern = currentPattern;
+
+    if (currentPattern.includes(nodeNumber)) {
+      nextPattern = [nodeNumber];
+    } else if (currentPattern.length < 4) {
+      nextPattern = [...currentPattern, nodeNumber];
+    }
+
+    setPatternSequence(nextPattern);
+    setChangeLockError("");
+
+    if (nextPattern.length === 4) {
+      await processPatternStep(nextPattern.join(""));
+    }
+  }
+
+  function handlePatternClear() {
+    setPatternSequence([]);
+    setChangeLockError("");
   }
 
   async function handleSubmit(e) {
@@ -152,7 +292,10 @@ export default function Signin() {
               <button className="auth-button auth-signin-btn" type="submit" disabled={loading}>
                 {loading ? "Signing In..." : "Sign In"}
               </button>
-              <div className="auth-footer-links auth-signin-links auth-signin-findqr-links">
+              <div className="auth-footer-links auth-signin-links">
+                <button type="button" className="auth-link auth-link-button" onClick={openChangeLockModal}>
+                  Change Lock
+                </button>
                 <button type="button" id="find-qr-link" className="auth-link auth-link-button" onClick={() => navigate("/find-qr")}>
                   Find QR
                 </button>
@@ -161,6 +304,61 @@ export default function Signin() {
           </div>
         </div>
       </div>
+      {isChangeLockModalOpen ? (
+        <div className="auth-pattern-modal-backdrop" onClick={closeChangeLockModal}>
+          <div className="auth-pattern-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="auth-pattern-modal-header">
+              <h5 className="auth-pattern-modal-title">{getChangeLockTitle()}</h5>
+              <button type="button" className="auth-pattern-close-btn" onClick={closeChangeLockModal} aria-label="Close change lock">
+                ×
+              </button>
+            </div>
+            <p className="auth-pattern-modal-subtitle">{getChangeLockSubtitle()}</p>
+            {changeLockStep === "phone" ? (
+              <form onSubmit={handleChangeLockPhoneSubmit} className="auth-pattern-phone-form" autoComplete="off">
+                <div className="auth-form-group">
+                  <input
+                    className="auth-input"
+                    type="tel"
+                    name="changeLockPhone"
+                    placeholder=" "
+                    value={changeLockPhone}
+                    onChange={(e) => setChangeLockPhone(e.target.value)}
+                    required
+                  />
+                  <label className="auth-label">Admin Mobile No</label>
+                </div>
+                <button className="auth-button auth-signin-btn" type="submit" disabled={isChangeLockChecking}>
+                  {isChangeLockChecking ? "Checking..." : "Continue"}
+                </button>
+              </form>
+            ) : (
+              <>
+                <div className="auth-pattern-toolbar">
+                  <button type="button" className="auth-pattern-clear-btn" onClick={handlePatternClear} disabled={isChangeLockChecking}>
+                    Clear
+                  </button>
+                </div>
+                <div className="auth-pattern-grid" role="group" aria-label="Pattern lock grid">
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((node) => (
+                    <button
+                      key={node}
+                      type="button"
+                      className={`auth-pattern-node ${patternSequence.includes(node) ? "active" : ""}`}
+                      onClick={() => handlePatternNodeClick(node)}
+                      disabled={isChangeLockChecking}
+                    >
+                      {node}
+                    </button>
+                  ))}
+                </div>
+                <p className="auth-pattern-preview">{patternSequence.length === 4 ? patternSequence.join(" → ") : "• • • •"}</p>
+              </>
+            )}
+            {changeLockError ? <p className="auth-pattern-error">{changeLockError}</p> : null}
+          </div>
+        </div>
+      ) : null}
       <AlertModal
         isOpen={modalConfig.isOpen}
         type={modalConfig.type}
